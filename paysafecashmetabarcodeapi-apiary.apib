@@ -1,0 +1,145 @@
+FORMAT: 1A
+HOST: https://reusable-barcodes-api-app-ppp-54519.ocp.dv.paysafecard.com/v1/
+
+# Paysafecash Re-Usable Barcode API
+
+Paysafecash Re-Usable Barcode REST API documentation.
+The business partner retrieves the Paysafecash barcode(called "Metabarcode" going forward) using an API request and has full control on how the Metabarcode is displayed to the customer.
+
+# Integration Process Overview
+This section provides an overview of the integration process
+
+## Integration Process
+The following steps need to be completed in order to integrate Paysafecash Re-Usable Barcode REST API.
+
++ **Test Data**: paysafecard provides the test data package. This contains an API key (for authentication), merchant account ID and a link to the downloads page.
++ **Integration in the Test Environment**: The business partner integrates Paysafecash Re-Usable Barcode REST API into their test environment. Detailed information about the transaction flow and API requests are contained below in this documentation.
++ **Integration Test**: As soon as the integration is finished in the test environment, the business partner must provide an URL and 2 test users to paysafecard. The paysafecard integration team will test the integration (technical flow and brand assurance).
++ **Production Data**: Once the integration test is successful, paysafecard provides the production data (API key).
++ **Switch to Production**: The business partner switches the Paysafecash integration to the production environment (change API endpoints and API key).
++ **IP whitelisting**: The business partner must whitelist in the Merchant Service Center, the IPs used to connect to the production environment.
++ **Production and BA check**: The business partner provides an URL and 2 test users to paysafecard. The technical support team will then process a real money end-to-end test and check if the integration is done accordingly to the interface guidelines.
++ **Go-Live**: As soon as the final check is successful, the integration is finished and can be used for end customers.
+
+# Technical Integration
+This section provides a technical introduction to the Paysafecash POS cashout REST API.
+
+## About the API
+The Paysafecash Re-Usable Barcode REST API follows <a href="http://en.wikipedia.org/wiki/Representational_state_transfer" target="_blank">*RESTful*</a> design principles making it easy to understand and integrate the API.
+Representational State Transfer (REST) is a software architecture style, consisting of guidelines for creating scalable web services.
+
+RESTful systems typically communicate over the Hypertext Transfer Protocol with the same HTTP verbs (GET, POST, PUT, DELETE, etc.) used by web browsers to retrieve web pages and send data to remote servers.
+
+It also facilitates solid and universally accepted foundations like [*http basic authentication*](http://en.wikipedia.org/wiki/Basic_access_authentication), [*http verbs*](http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Request_methods), [*JSON*](http://en.wikipedia.org/wiki/JSON) and [*CORS*](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing).
+
+## Versioning
+Every time there is backwards-incompatible change to the API, a new major version will be released. This major version is part of the URL path.
+The current major version is *v1*. Unless informed by our technical support department that we are dropping support for a particular API version, you do not need to switch API versions.
+
+## Establishing a connection
+A connection to the Paysafecash system is successful if the following prerequisites are fulfilled:
+- API key for request authentication provided by paysafecard.
+- Authorization of the server IP address in the production environment (if a 403 error is received when trying to access the service, it is likely that the IP address is not yet allowed to access).
+- Content-type: Please make sure that the content type in the HTTP header, when submitting requests, is set to **Content-Type: application/json**
+- Character encoding needs to be in UTF-8
+
+Connect to our services only via respective FQDNs
+Do not cache DNS resolutions of paysafecard FQDNs in your infrastructure (Client servers, Resolvers etc.). The DNS resolutions should expire as soon as the TTL is reached.
+In case your application is based on Java, please check your TTL setup on JVM, the DNS caching behavior needs to be adjusted to:
+networkaddress.cache.ttl=60 (TTL 60 seconds). Please note that, this parameter needs to be persisted in the JVM security config
+If your application is based on any other framework that caches DNS resolution, please make sure to set the DNS TTL to no more than 60 seconds or rely on the TTL set by our DNS records
+
+Honoring DNS changes will make sure that you connect always to our active system.
+
+## API key authentication
+Every request to the paysafecard API is authenticated using an API key.
+- The value of the **API key needs to be base64 encoded** when transmitted in the HTTP header!
+- Set the key as the username. [*HTTP basic authentication*](http://en.wikipedia.org/wiki/Basic_access_authentication)
+- Your API key may only be used from your backend systems.
+- **Please note:** Your API key must be kept secured - never expose the API key to anybody!
+
+Below is an example of how the API key is supposed to be set.
+
+```
+Authorization: Basic cHNjX0R4dThqSnI1LVdPYXhLWnpjOXdyMUtNLXd1Y3dZMXg=
+```
+## Test Environment and Endpoints
+Every new business partner needs to first integrate the API in the test environment.
+Once the integration is finished, a UAT(User Acceptance Test) needs to be done in order to ensure a seemless integration flow.
+
+- The endpoint for the *test environment* is: https://apitest.paysafecard.com/v1/barcodes/
+- The endpoint for the *production environment* is: https://api.paysafecard.com/v1/barcodes/
+
+# Transaction Flow
+In this section, the transaction flow for each integration type is shown.
+
+## Back end Integration
+![transaction_flow_back_end](http://www.paysafecash.com/fileadmin/5_API/transaction_flow_cashout_backend.PNG "Paysafecash POS cashout_Back_end_Integration_Flow")
+
+
+##  Metabarcode status
+|Value                  |Description    |
+|---                    |---                                                                 |
+|`ACTIVE`            |The initial state of a Metabarcode after it has been successfully created.    |
+|`USED`           |The customer has completed the transaction at a payment point.|
+|`PAID`              |The transaction has been completed successfully.|
+|`EXPIRED`   |The transaction has been cancelled by the business partner.|
+|`CANCELED`              |The customer has not logged in the barcode application for 30 minutes or the business partner has not generated the barcode after the transaction has been created. <br></br> <br></br> The customer has not completed the transaction at a payment point in the predefined time frame (default 24 hours, unless specified otherwise by the business partner).
+|`FAILED`              |The customer has not logged in the barcode application for 30 minutes or the business partner has not generated the barcode after the transaction has been created. <br></br> <br></br> The customer has not completed the transaction at a payment point in the predefined time frame (default 24 hours, unless specified otherwise by the business partner).
+|`INVALIDATED`              |The customer has not logged in the barcode application for 30 minutes or the business partner has not generated the barcode after the transaction has been created. <br></br> <br></br> The customer has not completed the transaction at a payment point in the predefined time frame (default 24 hours, unless specified otherwise by the business partner).
+
+
+
+## HTTP status codes
+| Code | Short Description     | Description |
+| ---  | ---                   | ---         |
+| 200  | OK                    | The request was successful.|
+| 201  | Created               | Object successfully created.|
+| 400  | Bad Request           | Invalid data provided in the request.|
+| 401  | Unauthorized          | Invalid or expired API key.|
+| 403  | Forbidden          | Unknown IP address.|
+| 404  | Not Found             | |
+| 500  | Internal Server Error | This indicates a general technical error on paysafecard's end.|
+| 501  | Not Implemented       | Version feature not implemented.|
+| 502  | Bad Gateway           | Invalid response from upstream system.|
+| 503  | Service Unavailable   | Server overloaded.|
+| 504  | Gateway Timeout       | Timeout from upstream system.|
+
+## Requesting a Barcode [/barcodes]
+
++ Attributes (PaymentRequest)
+
+### Initiating a Barcode Request [POST]
+
++ Request (application/json)
+
+    + Headers
+
+               Authorization: Basic cHNjX2VCR3JQcW1pQ1REd2dtTGxDU2NkOGxIZVJEY3NXeE8=
+
+    + Attributes (PaymentRequest)
+    
+
++ Response 201 (application/json)
+
+            {
+    "amount":10.00,
+    "max_amount":50.00,
+    "currency": "USD",
+    "country":"US",
+    "webhook_url": "https://webhook.site/#!/eb67b1bd-8085-4876-a77f-d42f69d3ac40",
+    "merchant_client_id":"test123",
+    "expire_time": 1648375903000
+            }
+
+
+# Data Structures
+
+## PaymentRequest
++ amount: 10.00 (number, optional) - Amount the transaction is issued for - `10.00`
++ max_amount: 50.00 (number, optional) - Full amount of payment the transaction is issued for   
++ currency: USD (string, required) - ISO 4217 (3 letter ISO currency code, mandatory) - Currency in which transaction is carried out
++ country: US (string, required) - ISO 3166 (2 letter ISO currency code, mandatory) - Country in which transaction is carried out
++ `webhook_url`: https://webhook.com/ (string, required)- URL to post transaction updates to the business partner.
++ merchant_client_id: 3ncrypt3d3m41l (object, optional) - TUniquely identifies the customer and is provided by business partner. If any personal data (e.g. customer's user name, email address, etc.) is used here, it has to be encrypted or hashed for security reasons.
++ expire_time: 1648375903000 (number, mandatory) - Expiration time of the Metabarcode. Unix Timestamp in Milliseconds(ms).
