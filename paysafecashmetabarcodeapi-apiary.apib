@@ -1,19 +1,19 @@
 FORMAT: 1A
-HOST: https://reusable-barcodes-api-app-ppp-54519.ocp.dv.paysafecard.com/v1/
+HOST: https:///api.test.paysafecard.com/v1
 
-# Paysafecash Re-Usable Barcode API
+# Paysafecash Reusable Barcode API
 
-Paysafecash Re-Usable Barcode REST API documentation.
-The business partner retrieves the Paysafecash barcode(called "Metabarcode" going forward) using an API request and has full control on how the Metabarcode is displayed to the customer.
+Paysafecash Reusable Barcode REST API documentation.
+The business partner retrieves the Paysafecash barcode (called "reusable barcode" going forward) using an API request and has full control on how the reusable barcode is displayed to the customer.
 
 # Integration Process Overview
-This section provides an overview of the integration process
+This section provides an overview of the integration process.
 
 ## Integration Process
-The following steps need to be completed in order to integrate Paysafecash Re-Usable Barcode REST API.
+The following steps need to be completed in order to integrate Paysafecash Reusable Barcode REST API.
 
 + **Test Data**: paysafecard provides the test data package. This contains an API key (for authentication), merchant account ID and a link to the downloads page.
-+ **Integration in the Test Environment**: The business partner integrates Paysafecash Re-Usable Barcode REST API into their test environment. Detailed information about the transaction flow and API requests are contained below in this documentation.
++ **Integration in the Test Environment**: The business partner integrates Paysafecash Reusable Barcode REST API into their test environment. Detailed information about the transaction flow and API requests are contained below in this documentation.
 + **Integration Test**: As soon as the integration is finished in the test environment, the business partner must provide an URL and 2 test users to paysafecard. The paysafecard integration team will test the integration (technical flow and brand assurance).
 + **Production Data**: Once the integration test is successful, paysafecard provides the production data (API key).
 + **Switch to Production**: The business partner switches the Paysafecash integration to the production environment (change API endpoints and API key).
@@ -22,10 +22,10 @@ The following steps need to be completed in order to integrate Paysafecash Re-Us
 + **Go-Live**: As soon as the final check is successful, the integration is finished and can be used for end customers.
 
 # Technical Integration
-This section provides a technical introduction to the Paysafecash POS cashout REST API.
+This section provides a technical introduction to the Paysafecash Reusable Barcode REST API.
 
 ## About the API
-The Paysafecash Re-Usable Barcode REST API follows <a href="http://en.wikipedia.org/wiki/Representational_state_transfer" target="_blank">*RESTful*</a> design principles making it easy to understand and integrate the API.
+The Paysafecash Reusable Barcode REST API follows <a href="http://en.wikipedia.org/wiki/Representational_state_transfer" target="_blank">*RESTful*</a> design principles making it easy to understand and integrate the API.
 Representational State Transfer (REST) is a software architecture style, consisting of guidelines for creating scalable web services.
 
 RESTful systems typically communicate over the Hypertext Transfer Protocol with the same HTTP verbs (GET, POST, PUT, DELETE, etc.) used by web browsers to retrieve web pages and send data to remote servers.
@@ -69,26 +69,30 @@ Once the integration is finished, a UAT(User Acceptance Test) needs to be done i
 
 - The endpoint for the *test environment* is: https://apitest.paysafecard.com/v1/barcodes/
 - The endpoint for the *production environment* is: https://api.paysafecard.com/v1/barcodes/
+<br></br>
+<br></br>
 
-# Transaction Flow
-In this section, the transaction flow for each integration type is shown.
+# Payment flow
+In this section, the payment flow is shown.
 
-## Back end Integration
-![transaction_flow_back_end](http://www.paysafecash.com/fileadmin/5_API/transaction_flow_cashout_backend.PNG "Paysafecash POS cashout_Back_end_Integration_Flow")
+![reusable_barcode_flow](https://www.paysafecash.com/fileadmin/5_API/Reusable_barcode_flow.png "Paysafecash Reusable barcode flow")
 
+# Group Payment Process
+Coming soon.
 
-##  Metabarcode status
+# Group Payment Information
+The following section provides additional information about the payment process.
+
+##  Reusable barcode status
 |Value                  |Description    |
 |---                    |---                                                                 |
-|`ACTIVE`            |The initial state of a Metabarcode after it has been successfully created.    |
-|`USED`           |The customer has completed the transaction at a payment point.|
-|`PAID`              |The transaction has been completed successfully.|
-|`EXPIRED`   |The transaction has been cancelled by the business partner.|
-|`CANCELED`              |The customer has not logged in the barcode application for 30 minutes or the business partner has not generated the barcode after the transaction has been created. <br></br> <br></br> The customer has not completed the transaction at a payment point in the predefined time frame (default 24 hours, unless specified otherwise by the business partner).
-|`FAILED`              |The customer has not logged in the barcode application for 30 minutes or the business partner has not generated the barcode after the transaction has been created. <br></br> <br></br> The customer has not completed the transaction at a payment point in the predefined time frame (default 24 hours, unless specified otherwise by the business partner).
-|`INVALIDATED`              |The customer has not logged in the barcode application for 30 minutes or the business partner has not generated the barcode after the transaction has been created. <br></br> <br></br> The customer has not completed the transaction at a payment point in the predefined time frame (default 24 hours, unless specified otherwise by the business partner).
-
-
+|`ACTIVE`               |The initial state of a reusable barcode after it has been successfully created.    |
+|`USED`                 |The customer has completed the transaction at a payment point.|
+|`PAID`                 |The transaction has been completed successfully.|
+|`EXPIRED`              |The transaction has been cancelled by the business partner.|
+|`CANCELED`             |The customer has not logged in the barcode application for 30 minutes or the business partner has not generated the barcode after the transaction has been created. <br></br> <br></br> The customer has not completed the transaction at a payment point in the predefined time frame (default 24 hours, unless specified otherwise by the business partner).
+|`FAILED`               |The customer has not logged in the barcode application for 30 minutes or the business partner has not generated the barcode after the transaction has been created. <br></br> <br></br> The customer has not completed the transaction at a payment point in the predefined time frame (default 24 hours, unless specified otherwise by the business partner).
+|`INVALIDATED`          |The customer has not logged in the barcode application for 30 minutes or the business partner has not generated the barcode after the transaction has been created. <br></br> <br></br> The customer has not completed the transaction at a payment point in the predefined time frame (default 24 hours, unless specified otherwise by the business partner).
 
 ## HTTP status codes
 | Code | Short Description     | Description |
@@ -97,7 +101,7 @@ In this section, the transaction flow for each integration type is shown.
 | 201  | Created               | Object successfully created.|
 | 400  | Bad Request           | Invalid data provided in the request.|
 | 401  | Unauthorized          | Invalid or expired API key.|
-| 403  | Forbidden          | Unknown IP address.|
+| 403  | Forbidden             | Unknown IP address.|
 | 404  | Not Found             | |
 | 500  | Internal Server Error | This indicates a general technical error on paysafecard's end.|
 | 501  | Not Implemented       | Version feature not implemented.|
@@ -105,41 +109,282 @@ In this section, the transaction flow for each integration type is shown.
 | 503  | Service Unavailable   | Server overloaded.|
 | 504  | Gateway Timeout       | Timeout from upstream system.|
 
-## Requesting a Barcode [/barcodes]
+*Below is an example of an error response:*
 
-+ Attributes (PaymentRequest)
+```
+   400 Bad Request
 
-### Initiating a Barcode Request [POST]
+   {
+      "code": "invalid_request_parameter"
+      "message": ""must contain 1-10 digits, followed by a decimal separator '.' followed by 2 digits",
+      "number": 10028,
+      "param": "amount"
+   }
+   
+```
+
+<br><br/>
+
+## customer id
+<a name="customer_id"></a>
+Also known as "Merchant Client ID", the customer id is an important parameter for the integration of Paysafecash.
+
+The customer id identifies the Customer on our business partners side. 
+
+The most optimal customer id is a completely random value. A value that uniquely identifies the customer and is disconnected from any personal information. 
+
+This value should be the same for all transactions of the customer.
+
+Here are Guidelines for possible customer ids: 
+<br><br/>
+<br><br/>
+**Valid Values:**
+|Value |Type 
+|--- |---
+`2c3be0b50c7a5f1964a63d78f38a6ffc41c027e9` |SHA1 - test@123.com
+`742f2b1a55cd5d606ea44b4fcb54646a` | MD5 - test@123.com
+`3a5b0d0777dead9df93d502df85c8180e53804eb`|SHA1 - UsernameValue1
+`3192481752123`| Random Customer Identifier
+`CustomerID1`| Customer Identifier free of personal information
+
+<br><br/>
+**Invalid Values:**
++ `test@123.com`
++ `Username_1`
++ `FirstName123`
++ `LastName123`
++ `Timestamp`
++ `IP Address`
+
+
+Please note that sending any form of the invalid values will not be accepted. 
+
+If you intend to process payments on multiple brands, please inquire about the possibilities of separating multiple entities for your account.
+
+# Group Payment API Requests
+
+## Generating a Reusable barcode [/barcodes]
+
+### generate reusable barcode [POST]
+```
+POST /barcodes
+```
 
 + Request (application/json)
 
     + Headers
 
-               Authorization: Basic cHNjX2VCR3JQcW1pQ1REd2dtTGxDU2NkOGxIZVJEY3NXeE8=
+               Authorization: Basic cHNjX0NVM1BJMjhRTmhDOEtTLUhEdGx3TjdoZVlqWHhRSHY=
 
-    + Attributes (PaymentRequest)
+    + Attributes (GenerateBarcode)
     
 
 + Response 201 (application/json)
 
             {
-    "amount":10.00,
-    "max_amount":50.00,
-    "currency": "USD",
-    "country":"US",
-    "webhook_url": "https://webhook.site/#!/eb67b1bd-8085-4876-a77f-d42f69d3ac40",
-    "merchant_client_id":"test123",
-    "expire_time": 1648375903000
+            "barcode":10000637168100003628,
+            "created":1648375903000,
+            "updated": "1648375903000",
+            "expires":"1648375903000",
+            "visualization": "CODE128",
+            "country":"US",
+            "status": "ACTIVE",
+            "barcode_identifier": "reusable_barcode_1"
             }
+            
+            
+## Returning a Reusable barcode [/barcodes/{id}]
+
+### return reusable barcode [GET]
+```
+GET barcodes/{id}
+```
+
+
++ Request (application/json)
+
+    + Headers
+
+               Authorization: Basic cHNjX0NVM1BJMjhRTmhDOEtTLUhEdGx3TjdoZVlqWHhRSHY=
+
++ Parameters
+    + id (required, string, `a1ab53ed-ad4e-417e-92ba-cf1baccf839e_1643803525`) Reusable barcode `id`.
+    
++ Response 200 (application/json)
+
+            {
+            "barcode":10000637168100003628,
+            "created":1648375903000,
+            "updated": "1648375903000",
+            "expires":"1648375903000",
+            "visualization": "CODE128",
+            "country":"US",
+            "status": "ACTIVE",
+            "barcode_identifier": "reusable_barcode_1"
+            }
+        
+
+## Cancelling a Reusable barcode [/barcodes/{id}/]
+
+### cancel reusable barcode [DELETE]
+
+```
+DELETE /barcodes/{id}/
+```
+
++ Request (application/json)
+
+    + Headers
+
+               Authorization: Basic cHNjX0NVM1BJMjhRTmhDOEtTLUhEdGx3TjdoZVlqWHhRSHY=
+
+
++ Parameters
+    + id (required, string, `a1ab53ed-ad4e-417e-92ba-cf1baccf839e_1643803525`) Reusable barcode `id`.
+
++ Response 200 (application/json)
+
+
+# Group Payment API response objects
+
+|Parameter|Description|Cases|
+|---|---|---|
+|`barcode`|The Reusable barcode number representation.|Always|
+|`created`|Unix timestamp specifying when the Reusable barcode was created.|Always|
+|`updated`|Unix timestamp specifying when the Reusable barcode was last updated.|Always|
+|`expires`|The Reusable barcode expiration time.|
+|`visualization`| Visualization the Reusable barcode should be displayed as. (QR or CODE_128_C)|Always|
+|`country`|The country the Reusable barcode was created for.|Always|
+|`status`|The current status of the Reusable barcode.|Always|
+|`barcode`|The Reusable barcode unique identifier.|Always|
+
+|`country`| ISO country code. (ISO 3166-1)|After the barcode has been generated.|
+
+
+# Group Payment Error Codes
+
+|Code                           |Number (optional)  |HTTP Status    |Description          |
+|---                                                                        |---                |---            |---                  |
+|`general_technical_error`                                                  |10007              |500            |General technical error.|
+|`invalid_api_key`                                                          |10008              |401            |Authentication failed due to missing or invalid API key. Your key needs to be set to the HTTP auth username.|
+|`invalid_request_parameter`                                                |10028              |400            |One of the request parameters failed validation. The `message` and `param` fields contain more detailed information.|
+|`invalid_currency`                                                         |142                |400            |The supplied currency is not supported|
+|`Merchant with Id XXXXXXXXXX is not active.`                               |3001               |400            |Merchant is not active.|
+|`Merchant with Id XXXXXXXXXX is not allowed to perform this debit any more`|3007               |400            |Debit attempt after expiry of dispo time window.|
+|`feature_disabled`                                                         |3172               |400            |Feature not active disabled|
+|`general_error`                                                            |3017               |400            |It is mandatory to send an MCID.|
+|`general_error`                                                            |3019               |400            |MCID contains invalid values.|
+
+
+Other errors can be communicated to the customer as “general technical error”. 
+
+In general when one of these errors occur, the business partner should contact paysafecard immediately via integration@paysafecard.com if the account is not live.
+
+For live accounts, techsupport@paysafecard.com should be contacted.
+
+# Group Webhook notification
+<a name="webhook_notification"></a> The *webhook notification* is an HTTP `POST` request sent to the business partner endpoint provided in the `initiate payment` request, as soon as a payment is captured by paysafecard (status "SUCCESS"), the payment is actively cancelled (status "CANCELLED_CUSTOMER" or "CANCELLED_MERCHANT") or the payment expires (status "EXPIRED"). 
+
+The business partner payment server must respond with *HTTP 200* and the authenticity of the webhook notification must be verified, as well as process the payment matching the details in the body of the message.
+<br><br>
+During the onboarding, the paysafecard team will provide a public key to the business partner which can be used to verifiy the authenticity of the webhook notification.
+<br><br>
+In case of technical errors (e.g. socket timeout) or application errors, the webhook notification is resubmitted at a regular interval of 1 minute until one of the following criteria is fulfilled:
+
+- The notification is successfully delivered (i.e. HTTP 200 response from payment server).
+- The maximum number of retry attempts has been reached (currently configured at 5 retries).
+- The webhook notification will be sent from either of the below IP addresses:
+
+| IP addresses  |
+|---|
+|  3.127.106.50 <br>3.126.164.128 <br>3.127.123.143 <br>176.34.172.250 <br>54.228.173.185 |
+
+# Group How to verifiy the webhook notification
+The webhook notification is signed with "rsa-sha256" and the signature can be found in the HTTP "Authorization" header.
+
+<br><br>
+HTTP headers
+```http
+Content-Type: application/json
+Authorization: keyId="1",algorithm="rsa-sha256",signature="OFPVO1uqac0U18LlEedwfdYaIPuuCIsvSxuDRV+nsU33F2TVYapR/JHR0mvJSAZUJWUTJk60PZXPhGF9eQLeIidxX1yJg8JA0pC0/CAt7JbiF39KsjMYMkCPp51q84s1RqAa23D2sljJuvPQYiDJLPlZ7PRSxYaIfmJ6MWzRq4Ku4XVi6OpqgAkO5V205UsDBmp8mxc00w1Eu5yAPoUjelZfxqHl/G2D0e5hWPuggtx/3hx2szFQDJzfHdRBhrlSqcU2WGzByXhy6A6FzeOQVysQNAR1/i+ztlhfCotY11Usb+Uh4yUVwi/I0pbKL+UJZ2VZlI6++SAO7CoQVkBAiw=="
+```
+|Parameter                  |Description    |
+|---                        |---                                                                 |
+|`keyId`                    |The signature key version id. It has always the value "1" except if communicated otherwise by the paysafecard integration team.    |
+|`algorithm`                |The algorithm used for the signature. A Paysafecash webhook notification will always be signed with "rsa-sha256".|
+|`signature`                |The signature of the webhook notification.|
+
+<br><br>
+HTTP body
+```http
+{
+    "timestamp":1539920400647,
+    "eventType":"PAYMENT_CAPTURED",
+    "version":"1",
+    "data": {
+        "mid":"1000000312",
+        "mtid":"pay_1000000312_kvQwaSARVDlZm2yxRVNaCYZObI5Xcd40_EUR"
+    }
+}
+```
+
+|Parameter                  |Description    |
+|---                        |---                                                                 |
+|`timestamp`                |The Unix timestamp of the payment.    |
+|`eventType`                |The event that triggered the webhook notification. There are only two event types: "PAYMENT_CAPTURED" or "PAYMENT_EXPIRED" |
+|`version`                  |The signature key version.|
+|`mid`                      |The Merchant ID and/or Sub-merchant ID provided for the allocation of the payment. |
+|`mtid`                     |The payment ID.|
+
+<br><br>
+The signature is created as follows:
+```
+signature = base64encode(rsa_encrypt(sha256(body), merchantPrivateKey))
+```
+And it is verified as follows:
+```
+rsa_decrypt(base64decode(signature), merchantPublicKey) == sha256(body)
+```
+
+<br><br>
+###Using the *[openssl dgst](https://www.openssl.org/docs/man1.0.2/man1/dgst.html)* function to verify the signature
+
+The digest functions can be used to verify digital signatures using message digests. The three steps below ilustrate how this can be done:
+
+1. Extract the public key from the rsa key file sent with the data package
+    ```
+    openssl rsa -RSAPublicKey_in -in webhook_signer_MANXXXXXXXXXX_1.rsa -out webhook_signer_MANXXXXXXXXXX_1_extracted.pem
+    ```
+
+2. Decode the signature of the webhook notification with base64
+    
+    Linux: ```base64 --decode signature.txt > signature_debase64.txt```
+    
+    Windows: ```certutil.exe -decode signature.txt signature_debase64.txt```
+    
+3. Verify the signature using the *[openssl dgst](https://www.openssl.org/docs/man1.0.2/man1/dgst.html)* function
+
+    The generic name, dgst, may be used with an option specifying the algorithm to be used. The default digest is sha256.
+    
+    ```
+    openssl dgst -sha256 -verify webhook_signer_MANXXXXXXXXXX_1_extracted.pem -signature signature_debase64.txt plaintext_payload.txt
+    ```
+
+    |Parameter                                                      |Description    |
+    |---                                                            |---                                                                 |
+    |`-verify webhook_signer_MANXXXXXXXXXX_1_extracted.pem.pem`     |Verifies the signature using the public key extracted in step 1. The output is either `Verification OK` or `Verification Failure`. |
+    |`-signature signature_debase64.txt`                            |The actual signature to verify in plain text, obtained in step 2.  |
+    |`plaintext_payload.txt`                                        |The body of the request in plain text.  |
+
 
 
 # Data Structures
 
-## PaymentRequest
-+ amount: 10.00 (number, optional) - Amount the transaction is issued for - `10.00`
-+ max_amount: 50.00 (number, optional) - Full amount of payment the transaction is issued for   
-+ currency: USD (string, required) - ISO 4217 (3 letter ISO currency code, mandatory) - Currency in which transaction is carried out
-+ country: US (string, required) - ISO 3166 (2 letter ISO currency code, mandatory) - Country in which transaction is carried out
+## GenerateBarcode
++ amount: 10.00 (number, required) - Amount the transaction is issued for.
++ max_amount: 50.00 (number, required) - Max total amount that can be paid for a given barcode (cap).
++ currency: USD (string, required) - ISO 4217 (3 letter ISO currency code, mandatory) - Currency in which the barcide is created for.
++ country: US (string, required) - ISO 3166 (2 letter ISO currency code, mandatory) - Country in which the barcide is created for.
 + `webhook_url`: https://webhook.com/ (string, required)- URL to post transaction updates to the business partner.
-+ merchant_client_id: 3ncrypt3d3m41l (object, optional) - TUniquely identifies the customer and is provided by business partner. If any personal data (e.g. customer's user name, email address, etc.) is used here, it has to be encrypted or hashed for security reasons.
-+ expire_time: 1648375903000 (number, mandatory) - Expiration time of the Metabarcode. Unix Timestamp in Milliseconds(ms).
++ merchant_client_id: 3ncrypt3d3m41l (string, required) - Uniquely identifies the customer and is provided by business partner. If any personal data (e.g. customer's user name, email address, etc.) is used here, it has to be encrypted or hashed for security reasons.
++ expire_time: 1648375903000 (number, required) - Expiration time of the reusable barcode. Unix Timestamp in Milliseconds(ms).
