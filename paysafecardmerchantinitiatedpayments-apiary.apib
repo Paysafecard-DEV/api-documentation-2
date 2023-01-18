@@ -1,0 +1,141 @@
+FORMAT: 1A
+HOST: https://apitest.paysafecard.com/v1
+
+# paysafecard Merchant Initiated Payments
+
+With our Merchant Initiated Payment API, you can request the customer's consent to initiate future transactions in their name.
+
+This API builds upon the base paysafecard REST API:
+https://www.paysafecard.com/fileadmin/api/index.html
+
+# Payment flow
+There are two ways to request the customer's consent. Either you request the customer's consent during a transaction they make, or you request the consent separately.
+
+## Customer consent during first payment
+test
+
+## Customer consent separately
+test
+
+# Group payment process
+test
+
+# Payment API requests
+test
+
+
+## Generate association ID: initiating a payment with customer consent option
+test
+
+```
+POST https://api.st.paysafecard.com/v1/payments/
+```
+test
+
+```
+{
+"type": "PAYSAFECARD",
+"amount": 7.65,
+"currency": "EUR",
+"redirect": {
+    "success_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c/okUrl",
+    "failure_url": "https://www.paysafecard.com/failure/{payment_id}"
+},
+"notification_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c",
+"customer": {
+    "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
+},
+"submerchant_id": "Tesu_1",  
+"automatic_payment_consent":"OPTIONAL"
+}
+```
+
+Receiving association ID in okUrl:
+
+```
+https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c/okUrl?associationId=spi_XEEhWKfJ4UlXBlaKYZj2e2dpyx
+```
+
+test
+## Generate association ID: requesting customer consent separately
+
+Redirect customer to URL:
+```
+https://login.st.paysafecard.com/customer-auth/?client_id=storedPI_ST&redirect_uri=https%3A%2F%2Flogin.st.paysafecard.com%2Fstoredpi%2F%23%2Fconfirm%3Fmid%3D1000000007%26submerchantId%3DTesu_1%26merchantClientId%3Dmerchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation%26merchantRedirectUrl%3Dhttps%253A%252F%252Fsome-merchant.com%252Fredirect
+```
+
+Receiving association ID in redirect URL:
+```
+https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c/okUrl2?association_id=spi_4jIhx1CXnpI6dh2g9BfY8vT0Ct
+```
+test
+
+## Generate customer token
+```
+GET https://api.st.paysafecard.com/v1/tokens/spi_XEEhWKfJ4UlXBlaKYZj2e2dpyx
+```
+
+```
+{
+    "customer": {
+        "psc_id": 926442420420
+    },
+    "mid": "1000000007",
+    "submerchant_id": "Tesu_1",
+    "payment_token": "spi_Fba40sW8NPhV2c9JitYq52rx3w",
+    "expiration_date": 1705482589604
+}
+```
+test
+## Create transaction with customer token
+
+```
+POST https://api.st.paysafecard.com/v1/payments/
+```
+test
+
+```
+{
+  "type": "PAYSAFECARD",
+  "amount": 7.65,
+  "currency": "EUR",
+  "redirect": {
+    "success_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c/okUrl",
+    "failure_url": "https://www.paysafecard.com/failure/{payment_id}"
+  },
+  "notification_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c",
+  "customer": {
+    "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
+  },
+  "submerchant_id": "Tesu_1",  
+  "payment_token":"spi_Fba40sW8NPhV2c9JitYq52rx3w"
+}
+```
+Response:
+```
+{
+    "object": "PAYMENT",
+    "id": "pay_1000000007_j2FE19p4QmSo0v1XEkOCsglF4cnnzV38_EUR",
+    "created": 1673950335546,
+    "updated": 1673950335546,
+    "currency": "EUR",
+    "status": "SUCCESS",
+    "type": "PAYSAFECARD",
+    "redirect": {
+        "auth_url": "https://customer.st.paysafecard.com/psccustomer/GetCustomerPanelServlet?mid=1000000007&mtid=pay_1000000007_j2FE19p4QmSo0v1XEkOCsglF4cnnzV38_EUR&amount=7.65&currency=EUR"
+    },
+    "customer": {
+        "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
+    },
+    "amount": 7.65,
+    "submerchant_id": "Tesu_1"
+}
+```
+
+
+## Error Codes
+|Code                                    |Number (optional)  |HTTP Status      |Description          |
+|---                                     |---                |---              |---                  |
+|`insufficient_balance`                  |10011              |400              |Insufficient funds on customer account.|
+|`invalid_storedpi_token`                |33007              |400              |Token not valid.|
+|`invalid_storedpi_association`          |33006              |400              |Association ID not valid.|
