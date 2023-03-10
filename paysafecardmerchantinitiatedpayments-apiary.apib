@@ -3,97 +3,104 @@ HOST: https://apitest.paysafecard.com/v1
 
 # paysafecard Merchant Initiated Payments
 
-With our Merchant Initiated Payment API, you can request the customer's consent to initiate future transactions in their name.
+With our Merchant Initiated Payment API, you can request the customer's consent to initiate future transactions in their name. This means you can facilitate either recurring payments, or one-click payments without the need for the customer to be redirected or to login.
 
 This API builds upon the base paysafecard REST API:
 https://www.paysafecard.com/fileadmin/api/index.html
 
-# Payment flow
+# Payment flow overview
+The Merchant Initiated Payment flow consists of three stages:
+1. Requesting customer consent to generate association ID
+2. Generate payment token with association ID
+3. Create transactions on behalf of the customer
+
+
+# Requesting customer consent
 There are two ways to request the customer's consent. Either you request the customer's consent during a transaction they make, or you request the consent separately.
 
 ## Customer consent during first payment
-test
+When initiating a payment, you can add the parameter `automatic_payment_consent` to the request with the values `OPTIONAL` or `MANDATORY`.
+If set to optional, this enables a consent checkbox when the customer pays for their transaction. If set to mandatory, a text shows to inform the customer 
 
-## Customer consent separately
-test
+If you send this parameter, the customer's `associationId` will be returned in the API response.
+The association ID will only be active if the customer accepts the consent checkbox.
+![customer_consent_payment](https://www.paysafecard.com/fileadmin/api/images/mip_customer_consent_trx.png)
 
-# Group payment process
-test
+## Customer consent by itself
+You can request the customer consent separately without initiating a transaction.
 
-# Payment API requests
-test
+For this, you need to make the POST request `generate_association` to the `/v1/association` endpoint, which returns a `association_url` where you have to redirect the customer to and the `associationId`.
+
+The customer needs to confirm the request to activate the association ID. You can check the status of the association with the GET request `get_association`.
+<!---
+For this, you need to generate a new URL for the customer including your MID, submerchant ID, customer ID, redirect URL and optionally a unique request ID.
+
+If the customer accepts, you will receive the `associationId`, the masked username (`customer_login`) and the `request_id` (if provided) in the redirect URL.
+
+https://login.paysafecard.com/storedpi/#/authenticate?mid=`mid`&submerchant_id=`submerchant_id`&customer_id=`customerId`&merchant_redirect_url=`redirect_url`&request_id=`request_id`
+
+-->
+![customer_consent_separate](https://www.paysafecard.com/fileadmin/api/images/mip_customer_consent_separate.PNG)
+
+# Receiving the payment token
+The `payment_token` is generated as soon as the customer confirmed the consent, and can be retrieved with the GET request `get_association` on the `/v1/association` endpoint.
+- The association ID is only valid for 60 minutes. If the customer doesn't confirm within this time, you will need to generate a new association request.
+- If you create a new association ID with the same parameters, the old association ID will be invalidated.
+- The payment token is valid for 365 days.
+- You can always check the status of the association ID / the payment token with the `get_association` request.
+
+# Creating transaction on customer's behalf
+To create a transaction on the customer's behalf, you need to make an `initiate_payment` request with the additional `payment_token` parameter.
+
+If the payment token is valid and if the customer has the necessary funds on their account, the transaction will be automatically finished. You can verify the transaction status with a `retrievePaymentDetails` request.
+
+## Grace period for failed attempts
+You have the option of giving the customer a grace period to finish the payment manually in case they didn't have enough funds in their account.
+- You will need to add the parameter `expiration_time_minutes` to the request, which specifies how long the customer can still pay for the transaction after it failed.
+- If you add this parameter, instead of failing with error code 10011 (`insufficient_balance`), you will receive the transaction information with status "INITIATED".
+- The customer will receive an email with a button to finish their payment
+- When the customer finished their payment manually, you will receive the payment notification that the transaction was successful. Please make a GET request to validate the transaction status.
+
+If you don't add the grace period, the customer will receive an email notification about insufficient funds without the possibility to complete the payment.
+
+Customer email with grace period:
+![grace_period_email](https://www.paysafecard.com/fileadmin/api/images/mip_grace_period.png)
+
+# Group Payment process
+1) The customer wants to give consent / the merchant requests the customer's consent
+    * 1.1 For a normal transaction with the option to automate for future transactions ("customer consent during first payment").
+        * 1.1.1 The merchant creates a transaction with `initiate_payment` with the additional parameter `automatic_payment_consent`.
+        * 1.1.2 The merchant redirects the customer to the `auth_url` received in the response.
+        * 1.1.3 The customer gives consent by logging in with their myPaysafe account, activating the checkbox and paying for the transaction.
+    * 1.2 The merchant offers a separate consent button without the creation of a transaction.
+        * 1.2.1 The merchant generates the link to the separate consent page via the `generate_association` request on hte `/v1/association` endpoint.
+        * 1.2.2 The customer gives consent by logging in with their myPaysafe account and accepting the request.
+2) The merchant receives the customer's `associationId` in the API response to the request.
+    * 2.1 In the API response to the `initiate_payment` (flow 1.1).
+    * 2.2 In the API response to the `generate_association` request (flow 1.2).
+3) The merchant generates the payment token.
+    * 3.1 Using the association ID from step 2, the merchant makes a the `get_association` request to the `/v1/association` endpoint to receive the `payment_token`.
+    * 3.2 Using the flow 1.1, the merchant can also receive the `payment_token` in the JSON payment notification.
+    * 3.3 The merchant saves and relates the payment token to the customer's account.
+4) The merchant creates a transaction on the customer's behalf.
+    * 4.1 The payment token from step 3.1 is used to make an `initiate_payment` request by adding the parameter `payment_token`.
+    * 4.2 If the payment token is valid & the customer has enough funds, the transaction is automatically finished.
+    * 4.3 The merchant receives back the transaction status "SUCCESS", confirming that the transaction was successful.
+    * 4.4 Using a `retrievePaymentDetails` request, the merchant can confirm the transaction status.
+    * 4.5 (optional) If the customer didn't have enough funds in their account and the merchant specified a grace period, the customer can finish the transaction manually.
+
+# Group Payment API requests
+
+## Generate association ID: transaction [/payments]
+Generate association ID: initiate payment with customer consent option.
 
 
-## Generate association ID: initiating a payment with customer consent option
-test
-
+Request type:
 ```
 POST https://api.st.paysafecard.com/v1/payments/
 ```
-test
 
-```
-{
-"type": "PAYSAFECARD",
-"amount": 7.65,
-"currency": "EUR",
-"redirect": {
-    "success_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c/okUrl",
-    "failure_url": "https://www.paysafecard.com/failure/{payment_id}"
-},
-"notification_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c",
-"customer": {
-    "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
-},
-"submerchant_id": "Tesu_1",  
-"automatic_payment_consent":"OPTIONAL"
-}
-```
-
-Receiving association ID in okUrl:
-
-```
-https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c/okUrl?associationId=spi_XEEhWKfJ4UlXBlaKYZj2e2dpyx
-```
-
-test
-## Generate association ID: requesting customer consent separately
-
-Redirect customer to URL:
-```
-https://login.st.paysafecard.com/customer-auth/?client_id=storedPI_ST&redirect_uri=https%3A%2F%2Flogin.st.paysafecard.com%2Fstoredpi%2F%23%2Fconfirm%3Fmid%3D1000000007%26submerchantId%3DTesu_1%26merchantClientId%3Dmerchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation%26merchantRedirectUrl%3Dhttps%253A%252F%252Fsome-merchant.com%252Fredirect
-```
-
-Receiving association ID in redirect URL:
-```
-https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c/okUrl2?association_id=spi_4jIhx1CXnpI6dh2g9BfY8vT0Ct
-```
-test
-
-## Generate customer token
-```
-GET https://api.st.paysafecard.com/v1/tokens/spi_XEEhWKfJ4UlXBlaKYZj2e2dpyx
-```
-
-```
-{
-    "customer": {
-        "psc_id": 926442420420
-    },
-    "mid": "1000000007",
-    "submerchant_id": "Tesu_1",
-    "payment_token": "spi_Fba40sW8NPhV2c9JitYq52rx3w",
-    "expiration_date": 1705482589604
-}
-```
-test
-## Create transaction with customer token
-
-```
-POST https://api.st.paysafecard.com/v1/payments/
-```
-test
-
+Request body:
 ```
 {
   "type": "PAYSAFECARD",
@@ -108,10 +115,181 @@ test
     "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
   },
   "submerchant_id": "Tesu_1",  
-  "payment_token":"spi_Fba40sW8NPhV2c9JitYq52rx3w"
+  "automatic_payment_consent":"OPTIONAL"
+
 }
 ```
-Response:
+
+
+Response body:
+```
+{
+    "object": "PAYMENT",
+    "id": "pay_1000000007_X6sidPxshDvyXLLeMECZnRAW6JQUoH8N_EUR",
+    "created": 1674129377511,
+    "updated": 1674129377511,
+    "currency": "EUR",
+    "status": "INITIATED",
+    "type": "PAYSAFECARD",
+    "redirect": {
+        "success_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c/okUrl",
+        "failure_url": "https://www.paysafecard.com/failure/pay_1000000007_X6sidPxshDvyXLLeMECZnRAW6JQUoH8N_EUR",
+        "auth_url": "https://customer.st.paysafecard.com/psccustomer/GetCustomerPanelServlet?mid=1000000007&mtid=pay_1000000007_X6sidPxshDvyXLLeMECZnRAW6JQUoH8N_EUR&amount=7.65&currency=EUR"
+    },
+    "customer": {
+        "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
+    },
+    "amount": 7.65,
+    "notification_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c",
+    "submerchant_id": "Tesu_1",
+    "automatic_payment_consent": "OPTIONAL",
+    "association_id": "spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1"    
+}
+```
+
+
+### Generate association ID: transaction [POST]
++ Request (application/json)
+
+    + Headers
+        Authorization: Basic cHNjX25wZ0g2THkxa3NXMS1CZzBQaURDNGZ0dzliSWtzQkY=
+
+    + Attributes (PaymentConsent)
+
++ Response 201 (application/json)
+
+    + Attributes (PaymentConsentResponse)
+
+## Generate association ID: separate consent [/association]
+Generate association ID: requesting customer consent by itself
+
+|Parameter                               |Description  |Example      |
+|---                                     |---                |---              |
+|`mid`                                   |Merchant MID. Either MID or Currency need to be added.                           |1000000007              |
+|`currency`                              |Currency. Either MID or Currency need to be added.              |1000000007              |
+|`submerchant_id`                        |Reporting Criterion (if used)              |RC001              |
+|`customer_id`                           |Customer ID / Merchant Client ID (MCID)              |CustomerId1234              |
+|`success_url`                 |URL the customer is redirected to after accepting.              |https://website.com/success_url              |
+|`failure_url`                 |URL the customer is redirected to after declining.              |https://website.com/failure_url              |
+<!---|`request_id`                            |Request ID to identify request              |RequestId001              | -->
+
+Request type:
+```
+POST https://api.st.paysafecard.com/v1/association
+```
+
+Request body:
+```
+{
+  "mid": 1000000007,
+  "currency": "EUR",
+  "submerchant_id": "Tesu_1",
+  "customer": {
+    "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
+  },
+  "success_url": "https://notification.com/{payment_id}",
+  "failure_url": "https://notification.com/{payment_id}"
+}
+```
+
+Response body:
+```
+{
+  "request_id": "pscrequestid1",
+  "association_id": "spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1",
+  "association_url": "\"https://login.dv.paysafecard.com/customer"
+}
+```
+
+
+
+### Generate association [POST]
++ Request (application/json)
+
+    + Headers
+               Authorization: Basic cHNjX25wZ0g2THkxa3NXMS1CZzBQaURDNGZ0dzliSWtzQkY=
+
+    + Attributes (generate_association)
+
++ Response 200 (application/json)
+ + Attributes (generate_association_response)
+        
+
+## Get customer token [/association/]
+
+Request type:
+```
+GET https://api.st.paysafecard.com/v1/association/spi_XEEhWKfJ4UlXBlaKYZj2e2dpyx
+```
+
+Response body:
+```
+{
+    "mid": "1000000007",
+    "submerchant_id":"Tesu_1",
+    "customer": {
+        "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation",
+        "login": "*******a_user" 
+    },
+    "association_id": "spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1",
+    "success_url": "https://website.com/failure_url",
+    "failure_url": "https://website.com/success_url",
+    "status": "VALID",
+    "created": 1677065396387,
+    "updated": 1677065396387,
+    "payment_token": "spi_Fba40sW8NPhV2c9JitYq52rx3w"
+}
+```
+
+
+
+### Get token [GET]
++ Request (application/json)
+
+
+    + Headers
+
+               Authorization: Basic cHNjX25wZ0g2THkxa3NXMS1CZzBQaURDNGZ0dzliSWtzQkY=
+               
+               
++ Parameters
+    + `association_id` (`spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1`) - Association ID.
+
+
+
+
++ Response 200 (application/json)
+
+ + Attributes (get_association_response)
+
+## Create transaction with customer token [/payments/]
+
+Request type:
+```
+POST https://api.st.paysafecard.com/v1/payments/
+```
+
+Request body:
+```
+{
+  "type": "PAYSAFECARD",
+  "amount": 7.65,
+  "currency": "EUR",
+  "redirect": {
+    "success_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c/okUrl",
+    "failure_url": "https://www.paysafecard.com/failure/{payment_id}"
+  },
+  "notification_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c",
+  "customer": {
+    "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
+  },
+  "submerchant_id": "Tesu_1",  
+  "payment_token":"spi_Fba40sW8NPhV2c9JitYq52rx3w",
+  "expiration_time_minutes":"5"
+}
+```
+
+Response body:
 ```
 {
     "object": "PAYMENT",
@@ -131,11 +309,207 @@ Response:
     "submerchant_id": "Tesu_1"
 }
 ```
+### Create transaction with customer token [POST]
++ Request (application/json)
+
+    + Headers
+            Authorization: Basic cHNjX25wZ0g2THkxa3NXMS1CZzBQaURDNGZ0dzliSWtzQkY=
+
+    + Attributes (PaymentToken)
+
++ Response 201 (application/json)
+
+    + Attributes (PaymentTokenResponse)
 
 
-## Error Codes
+## Grace period with insufficient funds [/payments1/]
+
+Create transaction with customer token where customer has insufficient funds grace period:
+
+Request type:
+```
+POST https://api.st.paysafecard.com/v1/payments/
+```
+
+Request body:
+```
+{
+  "type": "PAYSAFECARD",
+  "amount": 7.65,
+  "currency": "EUR",
+  "redirect": {
+    "success_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c/okUrl",
+    "failure_url": "https://www.paysafecard.com/failure/{payment_id}"
+  },
+  "notification_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c",
+  "customer": {
+    "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
+  },
+  "submerchant_id": "Tesu_1",  
+  "payment_token":"spi_Fba40sW8NPhV2c9JitYq52rx3w",
+  "expiration_time_minutes":"5"
+}
+```
+
+Response body:
+```
+{
+    "object": "PAYMENT",
+    "id": "pay_1000000007_j2FE19p4QmSo0v1XEkOCsglF4cnnzV38_EUR",
+    "created": 1673950335546,
+    "updated": 1673950335546,
+    "currency": "EUR",
+    "status": "INITIATED",
+    "type": "PAYSAFECARD",
+    "redirect": {
+        "success_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c/okUrl",
+        "failure_url": "https://www.paysafecard.com/failure/pay_1000000007_j2FE19p4QmSo0v1XEkOCsglF4cnnzV38_EUR",
+        "auth_url": "https://customer.st.paysafecard.com/psccustomer/GetCustomerPanelServlet?mid=1000000007&mtid=pay_1000000007_j2FE19p4QmSo0v1XEkOCsglF4cnnzV38_EUR&amount=7.65&currency=EUR"
+    },
+    "customer": {
+        "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
+    },
+    "amount": 7.65,
+    "submerchant_id": "Tesu_1",
+    "notification_url": "https://webhook.site/0b715f90-16d3-4850-9101-d387e88f830c"
+}
+```
+### Grace period with insufficient funds [POST]
++ Request (application/json)
+
+    + Headers
+
+               Authorization: Basic cHNjX25wZ0g2THkxa3NXMS1CZzBQaURDNGZ0dzliSWtzQkY=
+               
+ + Attributes (PaymentToken)
+
++ Response 201 (application/json)
+
+    + Attributes (PaymentTokenResponseGrace)
+
+            
+            
+
+# Group Error Codes
 |Code                                    |Number (optional)  |HTTP Status      |Description          |
 |---                                     |---                |---              |---                  |
 |`insufficient_balance`                  |10011              |400              |Insufficient funds on customer account.|
 |`invalid_storedpi_token`                |33007              |400              |Token not valid.|
 |`invalid_storedpi_association`          |33006              |400              |Association ID not valid.|
+
+# Data Structures
+## TypedObject (object)
++ type: PAYSAFECARD (required, fixed) - Type of the product, must be set to PAYSAFECARD.
+
+## PaymentConsent (TypedObject)
++ amount: 10.00 (number, required) - Payment amount, precision must be 2 digits after the colon.
++ currency: EUR (required) - ISO 4217 - 3 letter ISO currency code.
++ redirect (object) 
+    + `success_url`: https://notification.com/{payment_id} (required) - URLs to redirect after successful or failed authorization. The placeholder {payment_id} in the URL is replaced with the actual ID of this payment.
+    + `failure_url`: https://notification.com/{payment_id} (required) - URLs to redirect after customer clicked on cancel. The placeholder {payment_id} in the URL is replaced with the actual ID of this payment.
++ `notification_url`: https://notification.com/{payment_id} (required)- Notification URL we will contact after the authorization has been successfully completed. The placeholder {payment_id} in the URL is replaced with the actual ID of this payment.
++ customer (object) 
+    + id: merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation (required) - Only the id is mandatory. It´s value uniquely identifies the customer and is provided by you. If any personal data e.g. customer´s user name, email address, is used here, it has to be encrypted or hashed for security reasons.  
++ submerchant_id: 1 (optional) - Also called ‘reporting criteria’, offers the possibility to classify sub-merchants. Agreement with paysafecard needed - not agreed values lead to a failed payment. max. 8 digits in alpha numeric code
++ shop_id: `shop1` (optional) - Identification of the shop which is the originator of the request. This is most likely used by payment service providers who act as a proxy for other payment methods as well.
++ automatic_payment_consent: OPTIONAL (string) - Activates the consent option for this transaction. Possible values `OPTIONAL` and `MANDATORY`.
+
+## PaymentConsentResponse (object)
++ object: PAYMENT
++ id: pay_1000000007_psLILZQdlfk0x82IZB5J57qYq2SkJyXa_EUR
++ created: 1675849652503
++ updated: 1675849652503
++ amount: 10.00
++ currency: EUR
++ status: INITIATED
++ redirect (object)
+    + `success_url`: https://notification.com/{payment_id}
+    + `failure_url`: https://notification.com/{payment_id}
+    + `auth_url`: `https://customer.st.paysafecard.com/psccustomer/GetCustomerPanelServlet?mid=1000000007&mtid=pay_1000000007_X6sidPxshDvyXLLeMECZnRAW6JQUoH8N_EUR&amount=7.65&currency=EUR` (string)
++ `notification_url`: https://notification.com/{payment_id} (string)
++ customer (object)
+    + `id`: merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation
++ `submerchant_id`: 1
++ `automatic_payment_consent`: OPTIONAL
++ `association_id`: spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1 (string) - Association ID.
+
+
+## PaymentToken (TypedObject)
++ amount: 10.00 (number, required) - Payment amount, precision must be 2 digits after the colon.
++ currency: EUR (required) - ISO 4217 - 3 letter ISO currency code.
++ redirect (object) 
+    + `success_url`: https://notification.com/{payment_id} (required) - URLs to redirect after successful or failed authorization. The placeholder {payment_id} in the URL is replaced with the actual ID of this payment.
+    + `failure_url`: https://notification.com/{payment_id} (required) - URLs to redirect after customer clicked on cancel. The placeholder {payment_id} in the URL is replaced with the actual ID of this payment.
++ `notification_url`: https://notification.com/{payment_id} (required)- Notification URL we will contact after the authorization has been successfully completed. The placeholder {payment_id} in the URL is replaced with the actual ID of this payment.
++ customer (object) 
+    + id: merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation (required) - Only the id is mandatory. It´s value uniquely identifies the customer and is provided by you. If any personal data e.g. customer´s user name, email address, is used here, it has to be encrypted or hashed for security reasons.  
++ submerchant_id: 1 (optional) - Also called ‘reporting criteria’, offers the possibility to classify sub-merchants. Agreement with paysafecard needed - not agreed values lead to a failed payment. max. 8 digits in alpha numeric code
++ shop_id: `shop1` (optional) - Identification of the shop which is the originator of the request. This is most likely used by payment service providers who act as a proxy for other payment methods as well.
++ `payment_token`: spi_5O4jQPhE1UMKFN6Pmj6cdV6gPU (required) - Payment token that was received in step 3 "Generate customer token".
++ expiration_time_minutes: 5 (optional) - If provided, the customer has a grace period where they can finish the transaction.
+
+## PaymentTokenResponse (object)
++ object: PAYMENT (string)
++ id: pay_1000000007_psLILZQdlfk0x82IZB5J57qYq2SkJyXa_EUR (string)
++ created: 1675849652503 (number)
++ updated: 1675849652503 (number)
++ amount: 10.00 (number)
++ currency: EUR (required) - ISO 4217 (3 letter ISO currency code).
++ status: SUCCESS
++ redirect (object)
+    + `success_url`: https://notification.com/{payment_id} (string)
+    + `failure_url`: https://notification.com/{payment_id} (string)
+    + `auth_url`: https://customer.st.paysafecard.com/psccustomer/GetCustomerPanelServlet?mid=1000000007&mtid=pay_1000000007_X6sidPxshDvyXLLeMECZnRAW6JQUoH8N_EUR&amount=7.65&currency=EUR (string)
++ `notification_url`: https://notification.com/{payment_id} (string)
++ customer (object)
+    + `id`: merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation (string) 
++ submerchant_id: 1 (string) 
+
+## PaymentTokenResponseGrace (object)
++ object: PAYMENT (string)
++ id: pay_1000000007_psLILZQdlfk0x82IZB5J57qYq2SkJyXa_EUR (string)
++ created: 1675849652503 (number)
++ updated: 1675849652503 (number)
++ amount: 10.00 (number)
++ currency: EUR (required) - ISO 4217 (3 letter ISO currency code).
++ status: INITIATED
++ redirect (object)
+    + `success_url`: https://notification.com/{payment_id} (string)
+    + `failure_url`: https://notification.com/{payment_id} (string)
+    + `auth_url`: https://customer.st.paysafecard.com/psccustomer/GetCustomerPanelServlet?mid=1000000007&mtid=pay_1000000007_X6sidPxshDvyXLLeMECZnRAW6JQUoH8N_EUR&amount=7.65&currency=EUR (string)
++ `notification_url`: https://notification.com/{payment_id} (string)
++ customer (object)
+    + `id`: merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation (string) 
++ submerchant_id: 1 (string) 
+
+## get_token (object)
++ `association_id`: spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1 (string) - Association ID is received from the okUrl or redirect_url after getting the customer's consent.
+
+## get_association_response (object)
++ mid: 1000000007 (number) - MID
++ `submerchant_id`: Tesu_1 (string) - Submerchant ID.
++ customer (object)
+    + id: merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation (string) - Customer ID / merchant client ID.
+    + `login`: *******a_user (string) - Masked customer username.
++ `association_id`: spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1 (string) - Association ID.
++ `success_url`: https://website.com/failure_url (string) - Failure URL where the customer was redirected to in case of not confirming consent.
++ `failure_url`: https://website.com/success_url (string) - Success URL where the customer was redirected to in case of confirming consent.
++ status: VALID (string) - Status of the payment token. Possible values are `INITIATED`, `VALID`, `CANCELLED` and `EXPIRED`.
++ created: 1677065396387 (number) - Time when the token was created.
++ updated: 1677065396387 (number) - Time when the token was last updated.
++ `payment_token`: spi_5O4jQPhE1UMKFN6Pmj6cdV6gPU (required) (string) - Payment token to be used for step 4 "Create transaction with customer token".
+
+
+## generate_association (object)
++ mid: 1000000007 (number) - MID. Either MID or Currency need to be added.
++ currency: EUR (string) - Currency. Either MID or Currency need to be added.
++ `submerchant_id`: Tesu_1 (string) - Submerchant ID.
++ customer (object)
+    + `id`: merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation (string) 
++ `success_url`: https://notification.com/{payment_id} (string)
++ `failure_url`: https://notification.com/{payment_id} (string)
+
+## generate_association_response (object)
++ `request_id`: pscrequestid1 (string)
++ `association_id`: spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1 (string) - Association ID.
++ `association_url`: "https://login.dv.paysafecard.com/customer-auth/?client_id=storedPI_DV&redirect_uri=https%3A%2F%2Flogin.dv.paysafecard.com%2Fstoredpi%2F%23%2Fconfirm%3Fassociation_id%3DpscGeneratedAssociationId" (string) - Redirect URL for the customer.
