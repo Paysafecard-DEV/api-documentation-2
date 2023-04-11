@@ -187,8 +187,8 @@ Request body:
   "customer": {
     "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
   },
-  "success_url": "https://notification.com/{payment_id}",
-  "failure_url": "https://notification.com/{payment_id}"
+  "success_url": "https://notification.com/{request_id}",
+  "failure_url": "https://notification.com/{request_id}"
 }
 ```
 
@@ -229,7 +229,7 @@ Response body:
     "submerchant_id":"Tesu_1",
     "customer": {
         "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation",
-        "login": "*******a_user" 
+        "login": "customer@email.com" 
     },
     "association_id": "spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1",
     "success_url": "https://website.com/failure_url",
@@ -237,7 +237,8 @@ Response body:
     "status": "VALID",
     "created": 1677065396387,
     "updated": 1677065396387,
-    "payment_token": "spi_Fba40sW8NPhV2c9JitYq52rx3w"
+    "payment_token": "spi_Fba40sW8NPhV2c9JitYq52rx3w",
+    "expiration_time": 1677065396387
 }
 ```
 
@@ -490,7 +491,7 @@ Response body:
 + `submerchant_id`: Tesu_1 (string) - Submerchant ID.
 + customer (object)
     + id: merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation (string) - Customer ID / merchant client ID.
-    + `login`: *******a_user (string) - Masked customer username.
+    + `login`: customer@email.com (string) - Customer e-mail address.
 + `association_id`: spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1 (string) - Association ID.
 + `success_url`: https://website.com/failure_url (string) - Failure URL where the customer was redirected to in case of not confirming consent.
 + `failure_url`: https://website.com/success_url (string) - Success URL where the customer was redirected to in case of confirming consent.
@@ -498,6 +499,7 @@ Response body:
 + created: 1677065396387 (number) - Time when the token was created.
 + updated: 1677065396387 (number) - Time when the token was last updated.
 + `payment_token`: spi_5O4jQPhE1UMKFN6Pmj6cdV6gPU (required) (string) - Payment token to be used for step 4 "Create transaction with customer token".
++ `expoiration_time`: 1677065396387 (number) - Time when the token will expire.
 
 
 ## generate_association (object)
