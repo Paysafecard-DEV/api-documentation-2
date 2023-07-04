@@ -39,7 +39,7 @@ The customer needs to confirm the request to activate the association ID. You ca
 ![customer_consent_separate](https://www.paysafecard.com/fileadmin/api/images/mip_customer_consent_separate.PNG)
 
 # Receiving the payment token
-The `payment_token` *(SOPG `paymentToken`)* is generated as soon as the customer confirmed the consent, and can be retrieved with the GET request `get_association` *(SOPG `getAssociation`)* on the `/v1/association` endpoint.
+The `payment_token` *(SOPG `paymentToken`)* is generated as soon as the customer confirmed the consent, and can be retrieved with the GET request `get_association` *(SOPG `getAssociation`)* on the `/v1/association` endpoint, or via webhook notification if activated.
 - The association ID is only valid for 60 minutes. If the customer doesn't confirm within this time, you will need to generate a new association request.
 - If you create a new association ID with the same parameters, the old association ID will be invalidated.
 - The payment token is valid for 365 days.
@@ -71,9 +71,10 @@ Customer email with grace period:
     * 1.2 The merchant offers a separate consent button without the creation of a transaction.
         * 1.2.1 The merchant generates the link to the separate consent page via the `generate_association` request on the `/v1/association` endpoint.
         * 1.2.2 The customer gives consent by logging in with their myPaysafe account and accepting the request.
-2) The merchant receives the customer's `associationId` in the API response to the request.
+2) The merchant receives the customer's `associationId` in the API response to the request. _(optional: this step can be skipped if you are using the JSON payment notification for step 1.1)_
     * 2.1 In the API response to the `initiate_payment` (flow 1.1).
     * 2.2 In the API response to the `generate_association` request (flow 1.2).
+    * 2.3 In the webhook notification if activated via the MSC or on paysafecard side (flow 1.2).
 3) The merchant generates the payment token.
     * 3.1 Using the association ID from step 2, the merchant makes a the `get_association` request to the `/v1/association` endpoint to receive the `payment_token`.
     * 3.2 Using the flow 1.1, the merchant can also receive the `payment_token` in the JSON payment notification.
@@ -94,9 +95,10 @@ Customer email with grace period:
     * 1.2 The merchant offers a separate consent button without the creation of a transaction.
         * 1.2.1 The merchant generates the link to the separate consent page via the `generateAssociation` request.
         * 1.2.2 The customer gives consent by logging in with their myPaysafe account and accepting the request.
-2) The merchant receives the customer's `associationId` in the API response to the request.
+2) The merchant receives the customer's `associationId` in the API response to the request. _(optional: this step can be skipped if you are using the JSON payment notification for step 1.1)_
     * 2.1 In the API response to the `createDisposition` (flow 1.1).
     * 2.2 In the API response to the `generateAssociation` request (flow 1.2).
+    * 2.3 In the webhook notification if activated via the MSC or on paysafecard side (flow 1.2).
 3) The merchant generates the payment token.
     * 3.1 Using the association ID from step 2, the merchant makes a the `getAssociation` request to receive the `paymentToken`.
     * 3.2 Using the flow 1.1, the merchant can also receive the `paymentToken` in the JSON payment notification.
@@ -107,6 +109,19 @@ Customer email with grace period:
     * 4.3 The merchant receives back the result & error code 0, confirming that the transaction was successful.
     * 4.4 Using a `retrievePaymentDetails` request, the merchant needs to confirm the transaction status.
     * 4.5 (optional) If the customer didn't have enough funds in their account and the merchant specified a grace period (with `expirationTimeMinutes`), the customer can finish the transaction manually.
+
+# Group Payment process flowchart
+## Initial transaction
+![initial_transaction](https://www.paysafecard.com/fileadmin/api/images/mip_flow_transaction1.png)
+
+## Separate consent
+![separate_consent](https://www.paysafecard.com/fileadmin/api/images/mip_flow_consent_2.png)
+
+## Transaction with token
+![token_transaction](https://www.paysafecard.com/fileadmin/api/images/mip_flow_oneclick_2.png)
+
+## Grace period
+![grace_period](https://www.paysafecard.com/fileadmin/api/images/mip_flow_graceperiod_2.png)
 
 
 # Group Payment API requests REST
@@ -168,6 +183,33 @@ Response body:
 ```
 
 
+(optional) JSON payment notification:
+```
+{
+  "timestamp": 1687274921073,
+  "eventType": "ASSIGN_CARDS",
+  "version": "1",
+  "data": {
+    "mid": "1000000007",
+    "customer": {
+      "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
+    },
+    "submerchant_id": "Tesu_1",
+    "payment_id": "pay_1000000007_nDK6XT33l8zNP4EKnJcY1nCZ8O8RUaqu_EUR",
+    "card_details": [
+      {
+        "serial": "2520965751",
+        "currency": "EUR",
+        "amount": 0.65,
+        "type": "00002",
+        "country": "AT"
+      }
+    ],
+    "payment_token": "spi_APjSTF6XyATJStEaYC6asODUoi"
+  }
+}
+```
+
 ### Generate association ID: transaction [POST]
 + Request (application/json)
 
@@ -221,7 +263,44 @@ Response body:
 }
 ```
 
+(optional) JSON webhook notification after customer consent was given
+```
+{
+  "timestamp": 1688120991,
+  "eventType": "AUTOMATIC_PAYMENT_CONSENT_AUTHORIZED",
+  "version": "1",
+  "data": {
+    "mid": "1000000007",
+    "submerchant_id": "Tesu_1",
+    "automatic_payment_consent_authorized": {
+      "customer_id": "1merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation",
+      "customer_email": "lucas.hannel@paysafe.com",
+      "assocation_id": "spi_k82jHaXONJ8deQ4zOCo7OLZoYW",
+      "status": "VALID",
+      "payment_token": "spi_T91qqJLyeczDx32Dn0suXkqHJz",
+      "expiration_date": 1719656991079
+    }
+  }
+}
+```
 
+(optional) JSON webhook notification after customer consent was cancelled
+```
+{
+  "timestamp": 1688120991,
+  "eventType": "AUTOMATIC_PAYMENT_CONSENT_CANCELLED",
+  "version": "1",
+  "data": {
+    "mid": "1000000007",
+    "submerchant_id": "Tesu_1",
+    "automatic_payment_consent_cancelled": {
+      "cancelled_by": "SYSTEM",
+      "association_id": "spi_eaIdl0iSHHfQ0wqE4r43tlQLVF",
+      "cancelled_timestamp": 1688120990976
+    }
+  }
+}
+```
 
 ### Generate association [POST]
 + Request (application/json)
@@ -419,7 +498,7 @@ Test: https://soatest.paysafecard.com/psc/services/PscService
 Production: https://soa.paysafecard.com/psc/services/PscService
 
 
-## Generate association ID: transaction
+## Generate association ID: transaction 
 Generate association ID: initiate payment with customer consent option.
 
 Request:
@@ -466,8 +545,39 @@ Response:
 </soap:Envelope>
 ```
 
+
+(optional) JSON payment notification:
+```
+{
+  "timestamp": 1687274921073,
+  "eventType": "ASSIGN_CARDS",
+  "version": "1",
+  "data": {
+    "mid": "1000000007",
+    "customer": {
+      "id": "merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation"
+    },
+    "submerchant_id": "Tesu_1",
+    "payment_id": "pay_1000000007_nDK6XT33l8zNP4EKnJcY1nCZ8O8RUaqu_EUR",
+    "card_details": [
+      {
+        "serial": "2520965751",
+        "currency": "EUR",
+        "amount": 0.65,
+        "type": "00002",
+        "country": "AT"
+      }
+    ],
+    "payment_token": "spi_APjSTF6XyATJStEaYC6asODUoi"
+  }
+}
+```
+
+
 ## Generate association ID: separate consent
 Generate association ID: requesting customer consent by itself
+
+Important: you need to decode the `associationUrl` correctly, as it is URL encoded in the response.
 
 Request:
 ```
