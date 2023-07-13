@@ -85,6 +85,8 @@ Customer email with grace period:
     * 4.3 The merchant receives back the transaction status "SUCCESS", confirming that the transaction was successful.
     * 4.4 Using a `retrievePaymentDetails` request, the merchant can confirm the transaction status.
     * 4.5 (optional) If the customer didn't have enough funds in their account and the merchant specified a grace period, the customer can finish the transaction manually.
+5) (optional) The merchant revokes the association / consent
+    * 5.1  The merchant makes a DELETE call to the `/v1/association` endpoint
 
 # Group Payment process SOPG
 1) The customer wants to give consent / the merchant requests the customer's consent
@@ -284,6 +286,25 @@ Response body:
 }
 ```
 
+JSON webhook notification parameters `AUTOMATIC_PAYMENT_CONSENT_AUTHORIZED`:
+
+|Parameter                              |Type   |Description                |Example      |
+|---                                    |---    |---                        |---              |
+|`timestamp`                            |Long   |Timestamp of webhook       |1688120991              |
+|`eventType`                            |String |Type of notification       |`AUTOMATIC_PAYMENT_CONSENT_AUTHORIZED`              |
+|`version`                              |String |Webhook version            |1              |
+|`data`                                 |Object  |Array with data            |-              |
+|`mid`                                  |String |Merchant ID                |1000000007              |
+|`submerchant_id`                       |String |Submerchant ID / RC        |Tesu_1              |
+|`automatic_payment_consent_authorized` |Object  |Data of event              |-              |
+|`customer_id`                          |String |Customer ID                |1merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation              |
+|`customer_email`                       |String |Customer email             |lucas.hannel@paysafe.com              |
+|`association_id`                       |String |Association ID             |spi_k82jHaXONJ8deQ4zOCo7OLZoYW              |
+|`status`                               |String |Status of token/association|`INITIATED`,`VALID`,`TOKEN_EXPIRED`,`ASSOCIATION_EXPIRED`,`INVALIDATED_BY_ADMIN`,`INVALIDATED_BY_USER`,`INVALIDATED_BY_SYSTEM`,`INVALIDATED_BY_MERCHANT`|
+|`payment_token`                        |String |Token ID                   |spi_T91qqJLyeczDx32Dn0suXkqHJz              |
+|`expiration_date`                      |Long   |Timestamp of expiration    |1719656991079              |
+
+
 (optional) JSON webhook notification after customer consent was cancelled
 ```
 {
@@ -301,6 +322,24 @@ Response body:
   }
 }
 ```
+
+JSON webhook notification parameters `AUTOMATIC_PAYMENT_CONSENT_CANCELLED`:
+
+|Parameter                              |Type   |Description                |Example      |
+|---                                    |---    |---                        |---              |
+|`timestamp`                            |Long   |Timestamp of webhook       |1688120991              |
+|`eventType`                            |String |Type of notification       |`AUTOMATIC_PAYMENT_CONSENT_CANCELLED`              |
+|`version`                              |String |Webhook version            |1              |
+|`data`                                 |Object  |Array with data            |-              |
+|`mid`                                  |String |Merchant ID                |1000000007              |
+|`submerchant_id`                       |String |Submerchant ID / RC        |Tesu_1              |
+|`automatic_payment_consent_cancelled`  |Object  |Data of event              |-              |
+|`cancelled_by`                         |String |Source of cancellation     |`SYSTEM`,`ADMIN`,`USER`              |
+|`association_id`                       |String |Association ID             |spi_eaIdl0iSHHfQ0wqE4r43tlQLVF              |
+|`cancelled_timestamp`                  |Long   |Timestamp of cancellation  |1688120990976              |
+
+
+
 
 ### Generate association [POST]
 + Request (application/json)
@@ -487,7 +526,37 @@ Response body:
 
     + Attributes (PaymentTokenResponseGrace)
 
-            
+## Revoking association ID [/v1/association/]
+
+The merchant can revoke the association ID & the token.
+
+Request type:
+```
+DELETE https://api.st.paysafecard.com/v1/association/{`association_id`}
+```
+
+
+Response body:
+```
+{
+    "association_id": "spi_OfrPU8tSPPNMWKoquRcJTLIChG",
+    "status": "INVALIDATED_BY_MERCHANT"
+}
+```
+
+### Revoking association ID [DELETE]
++ Request (application/json)
+
+    + Headers
+
+               Authorization: Basic cHNjX25wZ0g2THkxa3NXMS1CZzBQaURDNGZ0dzliSWtzQkY=
+               
++ Parameters
+    + `association_id` (`spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1`) - Association ID.
+
++ Response 200 (application/json)
+
+    + Attributes (delete_association_response)            
             
 # Group Payment API requests SOPG
 
@@ -882,10 +951,10 @@ Response:
     + `id`: merchantclientid5HzDvoZSodKDJ7X7VQKrtestAutomation (string) 
 + submerchant_id: 1 (string) 
 
-## get_token (object)
+## `get_token` (object)
 + `association_id`: spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1 (string) - Association ID is received from the okUrl or redirect_url after getting the customer's consent.
 
-## get_association_response (object)
+## `get_association_response` (object)
 + mid: 1000000007 (number) - MID
 + `submerchant_id`: Tesu_1 (string) - Submerchant ID.
 + customer (object)
@@ -900,8 +969,15 @@ Response:
 + `payment_token`: spi_5O4jQPhE1UMKFN6Pmj6cdV6gPU (required) (string) - Payment token to be used for step 4 "Create transaction with customer token".
 + `expoiration_time`: 1677065396387 (number) - Time when the token will expire.
 
+## `delete_association` (object)
++ `association_id`: spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1 (string) - Association ID is received from the okUrl or redirect_url after getting the customer's consent.
 
-## generate_association (object)
+## `delete_association_response` (object)
++ `association_id`: spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1 (string) - Association ID.
++ status: INVALIDATED_BY_MERCHANT (string) - Status of the payment token.
+
+
+## `generate_association` (object)
 + mid: 1000000007 (number) - MID. Either MID or Currency need to be added.
 + currency: EUR (string) - Currency. Either MID or Currency need to be added.
 + `submerchant_id`: Tesu_1 (string) - Submerchant ID.
@@ -910,7 +986,7 @@ Response:
 + `success_url`: https://notification.com/{payment_id} (string)
 + `failure_url`: https://notification.com/{payment_id} (string)
 
-## generate_association_response (object)
+## `generate_association_response` (object)
 + `request_id`: pscrequestid1 (string)
 + `association_id`: spi_ZK06Ni9S1CdZmsYzNtd9hGVpd1 (string) - Association ID.
 + `association_url`: "https://login.dv.paysafecard.com/customer-auth/?client_id=storedPI_DV&redirect_uri=https%3A%2F%2Flogin.dv.paysafecard.com%2Fstoredpi%2F%23%2Fconfirm%3Fassociation_id%3DpscGeneratedAssociationId" (string) - Redirect URL for the customer.
