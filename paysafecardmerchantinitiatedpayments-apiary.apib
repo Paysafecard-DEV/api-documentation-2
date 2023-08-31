@@ -39,7 +39,7 @@ The customer needs to confirm the request to activate the association ID. You ca
 ![customer_consent_separate](https://www.paysafecard.com/fileadmin/api/images/mip_customer_consent_separate.PNG)
 
 # Receiving the payment token
-The `payment_token` *(SOPG `paymentToken`)* is generated as soon as the customer confirmed the consent, and can be retrieved with the GET request `get_association` *(SOPG `getAssociation`)* on the `/v1/association` endpoint, or via webhook notification if activated.
+The `payment_token` *(SOPG `paymentToken`)* is generated as soon as the customer confirmed the consent, and can be retrieved with the GET request `get_association` *(SOPG `getAssociation`)* on the `/v1/association` endpoint, or in the `capture` (SOPG `debitDisposition`) request during the first payment.
 - The association ID is only valid for 60 minutes. If the customer doesn't confirm within this time, you will need to generate a new association request.
 - If you create a new association ID with the same parameters, the old association ID will be invalidated.
 - The payment token is valid for 365 days.
@@ -71,14 +71,13 @@ Customer email with grace period:
     * 1.2 The merchant offers a separate consent button without the creation of a transaction.
         * 1.2.1 The merchant generates the link to the separate consent page via the `generate_association` request on the `/v1/association` endpoint.
         * 1.2.2 The customer gives consent by logging in with their myPaysafe account and accepting the request.
-2) The merchant receives the customer's `associationId` in the API response to the request. _(optional: this step can be skipped if you are using the JSON payment notification for step 1.1)_
+2) The merchant receives the customer's `associationId` in the API response to the request.
     * 2.1 In the API response to the `initiate_payment` (flow 1.1).
     * 2.2 In the API response to the `generate_association` request (flow 1.2).
     * 2.3 In the webhook notification if activated via the MSC or on paysafecard side (flow 1.2).
 3) The merchant generates the payment token.
     * 3.1 Using the association ID from step 2, the merchant makes a the `get_association` request to the `/v1/association` endpoint to receive the `payment_token`.
-    * 3.2 Using the flow 1.1, the merchant can also receive the `payment_token` in the JSON payment notification.
-    * 3.3 The merchant saves and relates the payment token to the customer's account.
+    * 3.2 The merchant saves and relates the payment token to the customer's account.
 4) The merchant creates a transaction on the customer's behalf.
     * 4.1 The payment token from step 3.1 is used to make an `initiate_payment` request by adding the parameter `payment_token`.
     * 4.2 If the payment token is valid & the customer has enough funds, the transaction is automatically finished.
@@ -97,14 +96,13 @@ Customer email with grace period:
     * 1.2 The merchant offers a separate consent button without the creation of a transaction.
         * 1.2.1 The merchant generates the link to the separate consent page via the `generateAssociation` request.
         * 1.2.2 The customer gives consent by logging in with their myPaysafe account and accepting the request.
-2) The merchant receives the customer's `associationId` in the API response to the request. _(optional: this step can be skipped if you are using the JSON payment notification for step 1.1)_
+2) The merchant receives the customer's `associationId` in the API response to the request.
     * 2.1 In the API response to the `createDisposition` (flow 1.1).
     * 2.2 In the API response to the `generateAssociation` request (flow 1.2).
     * 2.3 In the webhook notification if activated via the MSC or on paysafecard side (flow 1.2).
 3) The merchant generates the payment token.
     * 3.1 Using the association ID from step 2, the merchant makes a the `getAssociation` request to receive the `paymentToken`.
-    * 3.2 Using the flow 1.1, the merchant can also receive the `paymentToken` in the JSON payment notification.
-    * 3.3 The merchant saves and relates the payment token to the customer's account.
+    * 3.2 The merchant saves and relates the payment token to the customer's account.
 4) The merchant creates a transaction on the customer's behalf.
     * 4.1 The payment token from step 3.1 is used to make an `createDisposition` request by adding the parameter `paymentToken`.
     * 4.2 If the payment token is valid & the customer has enough funds, the transaction is automatically finished.
@@ -206,9 +204,51 @@ Response body:
         "type": "00002",
         "country": "AT"
       }
+    ]
+    }
+}
+```
+
+
+Capturing transaction, with `association_id` and `payment_token` in response body:
+Request type:
+```
+POST https://api.st.paysafecard.com/v1/payments/pay_1000001243_uYwQbT9Q6XmbHrF4OSOATOZBRCelqjza_EUR
+```
+
+
+Response body:
+```
+{
+    "object": "PAYMENT",
+    "id": "pay_1000001243_uYwQbT9Q6XmbHrF4OSOATOZBRCelqjza_EUR",
+    "created": 1693493212442,
+    "updated": 1693493244017,
+    "currency": "EUR",
+    "status": "SUCCESS",
+    "type": "PAYSAFECARD",
+    "redirect": {
+        "success_url": "https://webhook.site/2b760909-8803-4f18-880e-542f7123ed83/okUrl",
+        "failure_url": "https://www.paysafecard.com/failure/pay_1000001243_uYwQbT9Q6XmbHrF4OSOATOZBRCelqjza_EUR"
+    },
+    "customer": {
+        "id": "mip_test_mcid_1",
+        "ip": "213.208.158.212",
+        "psc_id": 723699775328
+    },
+    "amount": 0.65,
+    "notification_url": "https://webhook.site/2b760909-8803-4f18-880e-542f7123ed83",
+    "card_details": [
+        {
+            "serial": "1420237775",
+            "currency": "EUR",
+            "amount": 0.65,
+            "type": "00002",
+            "country": "AT"
+        }
     ],
-    "payment_token": "spi_APjSTF6XyATJStEaYC6asODUoi"
-  }
+    "association_id": "spi_6qH3SCcpSYnzqymlLmmKUJrsZY",
+    "payment_token": "spi_yXXzNLM8dK52JAkhNus5WVTD2e"
 }
 ```
 
@@ -216,6 +256,7 @@ Response body:
 + Request (application/json)
 
     + Headers
+    
         Authorization: Basic cHNjX25wZ0g2THkxa3NXMS1CZzBQaURDNGZ0dzliSWtzQkY=
 
     + Attributes (PaymentConsent)
@@ -636,8 +677,7 @@ Response:
         "type": "00002",
         "country": "AT"
       }
-    ],
-    "payment_token": "spi_APjSTF6XyATJStEaYC6asODUoi"
+    ]
   }
 }
 ```
@@ -865,6 +905,8 @@ Response:
 |Insufficient funds on customer account. |2004               |
 |Token not valid.                        |10033              |
 |Invalid association id.                 |10032              |
+
+
 
 # Data Structures
 ## TypedObject (object)
