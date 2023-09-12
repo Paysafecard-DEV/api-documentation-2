@@ -1,0 +1,257 @@
+FORMAT: 1A
+HOST: https://bulk.test.paysafecard.com/v1
+
+# Bulk Reusable Barcodes API
+
+This API gives the business partner, the possibility to generate and perform operations on multiple reusable barcodes with one API request, using CSV files.
+
+**Important:** All files must be in a valid CSV format. The decimal separator can be provided at user convenience.
+
+<br></br>
+## Test Environment and Production Endpoints
+Every new business partner needs to first integrate the API in the test environment.
+Once the integration is finished, a UAT(User Acceptance Test) needs to be done in order to ensure a seemless integration flow.
+
+- The endpoint for the *test environment* is: https://bulk.test.paysafecard.com/v1/barcodes/
+- The endpoint for the *production environment* is: https://bulk.paysafecard.com/v1/barcodes/
+
+
+# Group Payment API Requests
+
+## Generating Bulk Reusable barcodes [/barcodes/creation]
+
+### generate bulk reusable barcodes [POST]
+```
+POST /barcodes/creation
+```
+
++ Request (multipart/form-data)
+
+    + Headers
+
+            Accept: application/json
+            Authorization:  Basic cHNjX1FWNk5ENGI3VjVpUnNJZVd5UVl1bGxyUVZ3c0xFYmc=
+            notification_url: https://api.merchant.com/notify
+            
+   + Body
+   
+            amount,max_amount,currency,country,webhook_url,customer_id,expire_time,correlation_id
+            100,150,USD,US,https://webhook.com/87e4134d-90b4-4084-8209-0280b2d11b6e,customerId,1756090825518,test_correlation_id_12345
+            150,200,USD,US,https://webhook.com/87e4134d-90b4-4084-8209-0280b2d11b6e,customerId1,1756090825518,test_correlation_id_23456
+            200,250,USD,US,https://webhook.com/87e4134d-90b4-4084-8209-0280b2d11b6e,customerId2,1756090825518,test_correlation_id_34567
+
+
++ Response 200 (application/json)
+
+        {
+            "tracking_id": "1000056914/c/b2c019f4-18ed-4f30-bd42-177f95b6fa70_1694447255"
+        }
+            
+    
+## Editing Bulk Reusable barcodes [/barcodes/modification]
+
+### edit bulk reusable barcodes [POST]
+```
+POST /barcodes/modification
+```
+
+
++ Request (multipart/form-data)
+
+    + Headers
+
+            Accept: application/json
+            Authorization:  Basic cHNjX1FWNk5ENGI3VjVpUnNJZVd5UVl1bGxyUVZ3c0xFYmc=
+            notification_url: https://api.merchant.com/notify
+            
+
+
+
++ Response 201 (application/json)
+
+            {
+            "barcode":10000637168100003628,
+            "created":1648375903000,
+            "updated": "1648375903000",
+            "expires":"1648375903000",
+            "visualization": "CODE128",
+            "country":"US",
+            "status": "ACTIVE",
+            "barcode_identifier": "reusable_barcode_1"
+            }
+            
+## Cancelling Bulk Reusable barcodes [/barcodes/cancellation]
+
+### cancel bulk reusable barcodes [POST]
+```
+POST /barcodes/cancellation
+```
+
+
++ Request (multipart/form-data)
+
+    + Headers
+
+            Accept: application/json
+            Authorization:  Basic cHNjX1FWNk5ENGI3VjVpUnNJZVd5UVl1bGxyUVZ3c0xFYmc=
+            notification_url: https://api.merchant.com/notify
+            
+
+
+
++ Response 201 (application/json)
+
+            {
+            "barcode":10000637168100003628,
+            "created":1648375903000,
+            "updated": "1648375903000",
+            "expires":"1648375903000",
+            "visualization": "CODE128",
+            "country":"US",
+            "status": "ACTIVE",
+            "barcode_identifier": "reusable_barcode_1"
+            }
+            
+## Retrieving Bulk Reusable barcodes [/barcodes/json?{tracking_id}]
+
+### retrieve bulk reusable barcodes [GET]
+
+```
+GET /barcodes/json?{tracking_id}
+```
+
+
++ Parameters
+    
+    + `tracking_id`: `1000056914/c/beb32da7-cdaf-48e7-a90b-f2852a85d641_1694435804`
+
++ Request
+
+    + Headers
+
+            Accept: application/json
+            Authorization: Basic cHNjX1FWNk5ENGI3VjVpUnNJZVd5UVl1bGxyUVZ3c0xFYmc=
+            
+
++ Response 200 (application/json)
+
+        [
+            {
+                "barcode": "799366433670006371683106191225",
+                "created": 1694447282799,
+                "updated": 1694447282799,
+                "expires": 1756090825518,
+                "visualization": "CODE128",
+                "country": "US",
+                "status": "ACTIVE",
+                "barcode_identifier": "cbd0e3d5-8052-4180-a528-e6e2336abbfc_1694447282",
+                "correlation_id": "test_correlation_id_12345"
+            },
+            {
+                "barcode": "799366433670006371683106191019",
+                "created": 1694447282814,
+                "updated": 1694447282814,
+                "expires": 1756090825518,
+                "visualization": "CODE128",
+                "country": "US",
+                "status": "ACTIVE",
+                "barcode_identifier": "ae640551-be08-4663-ac84-1ab2720c6cff_1694447282",
+                "correlation_id": "test_correlation_id_23456"
+            },
+            {
+                "barcode": "799366433670006371683106191480",
+                "created": 1694447282821,
+                "updated": 1694447282821,
+                "expires": 1756090825518,
+                "visualization": "CODE128",
+                "country": "US",
+                "status": "ACTIVE",
+                "barcode_identifier": "b112c15f-bbc5-440a-b79f-9f546e1c75b3_1694447282",
+                "correlation_id": "test_correlation_id_34567"
+            }
+        ]
+
+## Downloading Bulk Reusable barcodes [/barcodes/file?{tracking_id}]
+
+### download bulk reusable barcodes [GET]
+
+```
+GET /barcodes/file?{tracking_id}
+```
+
+
++ Parameters
+    
+    + `tracking_id`: `1000056914/c/beb32da7-cdaf-48e7-a90b-f2852a85d641_1694435804`
+
++ Request
+
+    + Headers
+
+            Accept: application/json
+            Authorization: Basic cHNjX1FWNk5ENGI3VjVpUnNJZVd5UVl1bGxyUVZ3c0xFYmc=
+            
+
++ Response 200 (application/json)
+
+        [
+            {
+                "barcode": "799366433670006371683106191225",
+                "created": 1694447282799,
+                "updated": 1694447282799,
+                "expires": 1756090825518,
+                "visualization": "CODE128",
+                "country": "US",
+                "status": "ACTIVE",
+                "barcode_identifier": "cbd0e3d5-8052-4180-a528-e6e2336abbfc_1694447282",
+                "correlation_id": "test_correlation_id_12345"
+            },
+            {
+                "barcode": "799366433670006371683106191019",
+                "created": 1694447282814,
+                "updated": 1694447282814,
+                "expires": 1756090825518,
+                "visualization": "CODE128",
+                "country": "US",
+                "status": "ACTIVE",
+                "barcode_identifier": "ae640551-be08-4663-ac84-1ab2720c6cff_1694447282",
+                "correlation_id": "test_correlation_id_23456"
+            },
+            {
+                "barcode": "799366433670006371683106191480",
+                "created": 1694447282821,
+                "updated": 1694447282821,
+                "expires": 1756090825518,
+                "visualization": "CODE128",
+                "country": "US",
+                "status": "ACTIVE",
+                "barcode_identifier": "b112c15f-bbc5-440a-b79f-9f546e1c75b3_1694447282",
+                "correlation_id": "test_correlation_id_34567"
+            }
+        ]
+  
+# Group Bulk Reusable Barcode API Parameters 
+In this section we will describe Bulk Reusable Barcode API request and response parameters
+
+## Request Parameters details
+| Parameter                     | Type      | Constraint | Example                  | Description                          |
+| ---                           | ---       | ---        | ---                      | ---                                  |
+| `amount`                      | number    | optional   | 10.00                    | Amount the transaction is issued for. 
+| `max_amount`                  | number    | optional   | 50.00                    | Max total amount that can be paid for a given barcode
+| `currency`                    | string    | required   | USD                      | ISO 4217 (3 letter ISO currency code) - Currency in which the barcide is created for.
+| `webhook_url`                 | string    | required   | https://webhook.com/     | URL to post transaction updates to the business partner.
+| `customer_id`                 | string    | required   | 3ncrypt3d3m41l           | Uniquely identifies the customer and is provided by business partner. If any personal data (e.g. customer's user name, email address, etc.) is used here, it has to be encrypted or hashed for security reasons.
+| `expire_time`                 | number    | required   | 1756090825518            | Expiration time of the reusable barcode. Unix Timestamp in Milliseconds(ms).
+
+## Response Parameters details
+| Parameter                     | Type      |  Example                                          | Description                          
+| ---                           | ---       |---                                                |---
+| `barcode`                     | string    | 799366433670006371683106190078                    | Barcode number. 
+| `created`                     | number    | 1694435820845                                     | Creation time of the reusable barcode. Unix Timestamp in Milliseconds(ms).
+| `updated`                     | number    | 1694435820845                                     | Update time of the reusable barcode. Unix Timestamp in Milliseconds(ms).
+| `expires`                     | number    | 1756090825518                                     | Expiration time of the reusable barcode. Unix Timestamp in Milliseconds(ms).
+| `visualization`               | string    | CODE128                                           | Barcode visualization format.
+| `country`                     | string    | US                                                | Country the barcode is generated for/can be paid in.
+| `status`                      | string    | ACTIVE                                            | Barcode status.
+| `barcode_identifier`          | string    | fdde7bc9-6f68-43dc-95e1-bfc9aebae955_1694435820   | Identification value of the barcode.
+| `correlation_id`              | string    | test_correlation_id_34567                         | Correlation ID sent in the initial request from merchant.
