@@ -18,11 +18,18 @@ Once the integration is finished, a UAT(User Acceptance Test) needs to be done i
 
 # Group Payment API Requests
 
-## Generating Bulk Reusable barcodes [/barcodes/creation]
+## Generating Bulk Reusable barcodes [/creation]
+<br></br>
 
+This call is used to request the generation of multiple reusable barcodes. In order for it to be completed successfully,
+specific details need to be provided in the request. Most important information that needs to be provided, is the file containing
+details that the barcodes should have, i.e. amount of the barcode, maximum amount that can be paid for that barcode, currency,
+country etc. All these details need to be provided in a CSV formated file. An example of such details can be found in the body
+of the example request below.
+<br></br>
 ### generate bulk reusable barcodes [POST]
 ```
-POST /barcodes/creation
+POST /creation
 ```
 
 + Request (multipart/form-data)
@@ -48,11 +55,11 @@ POST /barcodes/creation
         }
             
     
-## Editing Bulk Reusable barcodes [/barcodes/modification]
+## Editing Bulk Reusable barcodes [/modification]
 
 ### edit bulk reusable barcodes [POST]
 ```
-POST /barcodes/modification
+POST /modification
 ```
 
 
@@ -80,11 +87,11 @@ POST /barcodes/modification
             "barcode_identifier": "reusable_barcode_1"
             }
             
-## Cancelling Bulk Reusable barcodes [/barcodes/cancellation]
+## Cancelling Bulk Reusable barcodes [/cancellation]
 
 ### cancel bulk reusable barcodes [POST]
 ```
-POST /barcodes/cancellation
+POST /cancellation
 ```
 
 
@@ -112,12 +119,12 @@ POST /barcodes/cancellation
             "barcode_identifier": "reusable_barcode_1"
             }
             
-## Retrieving Bulk Reusable barcodes [/barcodes/json?{tracking_id}]
+## Retrieving Bulk Reusable barcodes [/json?{tracking_id}]
 
 ### retrieve bulk reusable barcodes [GET]
 
 ```
-GET /barcodes/json?{tracking_id}
+GET /json?{tracking_id}
 ```
 
 
@@ -171,12 +178,12 @@ GET /barcodes/json?{tracking_id}
             }
         ]
 
-## Downloading Bulk Reusable barcodes [/barcodes/file?{tracking_id}]
+## Downloading Bulk Reusable barcodes [/file?{tracking_id}]
 
 ### download bulk reusable barcodes [GET]
 
 ```
-GET /barcodes/file?{tracking_id}
+GET /file?{tracking_id}
 ```
 
 
